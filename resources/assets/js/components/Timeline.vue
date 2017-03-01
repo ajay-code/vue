@@ -32,15 +32,34 @@ export default {
     ],
 
     mounted() {
-        eventHub.$on('post-added', this.addPost)
+        eventHub.$on('post-added', this.addPost);
+        eventHub.$on('post-liked', this.likePost);
+        this.listen();
         axios.get('/posts').then(res => {
             this.posts = res.data;
-        })
+        });
     },
 
     methods: {
         addPost(post){
-            this.posts.unshift(post);
+            this.posts.unshift(post);  
+        },
+        likePost(postId){
+
+            _.each(this.posts, (post)=>{
+                if(post.id == postId){
+                    post.likeCount++;
+                    post.likedByCurrentUser = true;
+                    post.CanBelikedByCurrentUser = false;
+                    return false;
+                }
+            })
+        },
+        listen(){
+            Echo.private('posts').listen('PostWasCreated', (e) =>{
+                this.posts.unshift(JSON.parse(e.post));   
+                console.log(JSON.parse(e.post));
+            });
         }
     }
 }
